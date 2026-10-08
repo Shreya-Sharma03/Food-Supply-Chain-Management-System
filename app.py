@@ -243,14 +243,33 @@ def main():
     st.title("Food Supply Chain Management System")
     st.markdown("Real-time read-only dashboard for monitoring crops, inventory, and supply chain partners.")
 
-    # --- Sidebar: Database Configuration ---
-    st.sidebar.header("Database Connection")
+    # Hide Streamlit's default "Deploy" button and footer for a clean dashboard appearance
+    st.markdown(
+        """
+        <style>
+        .stDeployButton {display: none !important;}
+        footer {visibility: hidden;}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-    sidebar_host = st.sidebar.text_input("Host", value=get_setting("DB_HOST", "localhost"))
-    sidebar_port = st.sidebar.number_input("Port", value=int(get_setting("DB_PORT", "3306")), step=1)
-    sidebar_user = st.sidebar.text_input("User", value=get_setting("DB_USER", "root"))
-    sidebar_password = st.sidebar.text_input("Password", value=get_setting("DB_PASSWORD", ""), type="password")
-    sidebar_database = st.sidebar.text_input("Database", value=get_setting("DB_NAME", "smart_food_supply"))
+    # --- Sidebar: Database Configuration ---
+    st.sidebar.header("System Settings")
+
+    default_host = get_setting("DB_HOST", "localhost")
+    default_port = int(get_setting("DB_PORT", "3306"))
+    default_user = get_setting("DB_USER", "root")
+    default_password = get_setting("DB_PASSWORD", "")
+    default_database = get_setting("DB_NAME", "smart_food_supply")
+
+    # Provide connection fields in a collapsible expander to keep the sidebar uncluttered
+    with st.sidebar.expander("Database Settings", expanded=not bool(default_password)):
+        sidebar_host = st.text_input("Host", value=default_host)
+        sidebar_port = st.number_input("Port", value=default_port, step=1)
+        sidebar_user = st.text_input("User", value=default_user)
+        sidebar_password = st.text_input("Password", value=default_password, type="password")
+        sidebar_database = st.text_input("Database", value=default_database)
 
     conn = connect_db(
         host=sidebar_host,
@@ -261,8 +280,11 @@ def main():
     )
 
     if conn is None:
+        st.sidebar.error("Database Disconnected")
         st.stop()
         return
+
+    st.sidebar.success(f"Connected: `{sidebar_database}`")
 
     # Load data safely from MySQL
     data = load_data(conn)
